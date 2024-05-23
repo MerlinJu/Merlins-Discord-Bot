@@ -1,6 +1,7 @@
 import discord
 import os
 import random
+import requests
 from discord.ext import commands
 from dotenv import load_dotenv
 from typing import Final
@@ -20,6 +21,22 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 # remove the default help command
 bot.remove_command('help')
+
+
+# fetch jokes from the jokes API
+def fetch_jokes():
+    URL = "https://witzapi.de/api/joke"
+    response = requests.get(URL)
+    print(response.status_code) # if 200, some data will be transferred
+    if response.status_code == 200:
+        try:
+            jokes_list = response.json()
+            return [joke['text'] for joke in jokes_list ]
+        except KeyError:
+            return 'Unexpected response format.'
+
+    else:
+        return 'Couldnt fetch jokes at this time...'
 
 
 # Error handling for invalid commands
@@ -54,6 +71,13 @@ async def repeat_user(ctx, arg):
 @bot.command(name="channel")
 async def print_channel(ctx):
     await ctx.send(f'You are in #{ctx.channel}')
+
+# joke command
+@bot.command(name='joke')
+async def joke(ctx):
+    jokes = fetch_jokes()
+    for joke in jokes: 
+        await ctx.send(joke)
 
 
 # custom converter class for slapping someone
